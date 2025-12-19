@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Feedback System</title>
+</head>
+<body>
+
+<h2>Feedback System</h2>
+
+<label>Role:</label><br>
+<select id="role" onchange="toggleAdmin()">
+  <option value="user">User</option>
+  <option value="admin">Admin</option>
+</select><br><br>
+
+<label>Name:</label><br>
+<input type="text" id="name"><br><br>
+
+<label>Message:</label><br>
+<textarea id="message"></textarea><br><br>
+
+<button onclick="submitFeedback()">Submit Feedback</button>
+
+<br><br>
+
+<button id="fetchBtn" onclick="fetchAdminData()" style="display:none;">
+  View Admin (RDS) Data
+</button>
+
+<pre id="output"></pre>
+
+<script>
+const USER_API = "https://fmm1fnswtl.execute-api.us-east-1.amazonaws.com/prod/feedback";
+const ADMIN_API = "https://fmm1fnswtl.execute-api.us-east-1.amazonaws.com/prod/admin";
+
+function toggleAdmin() {
+  const role = document.getElementById("role").value;
+  document.getElementById("fetchBtn").style.display =
+    role === "admin" ? "block" : "none";
+}
+
+function submitFeedback() {
+  const role = document.getElementById("role").value;
+  const name = document.getElementById("name").value;
+  const message = document.getElementById("message").value;
+
+  if (!name || !message) {
+    alert("Please fill all fields");
+    return;
+  }
+
+  const url = role === "admin" ? ADMIN_API : USER_API;
+
+  const payload =
+    role === "admin"
+      ? { name, message, action: "insert" }
+      : { name, message };
+
+  fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+    .then(res => res.text())
+    .then(data => document.getElementById("output").innerText = data)
+    .catch(err => alert(err));
+}
+
+function fetchAdminData() {
+  fetch(ADMIN_API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "fetch" })
+  })
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("output").innerText =
+        JSON.stringify(data, null, 2);
+    })
+    .catch(err => alert(err));
+}
+</script>
+
+</body>
+</html>
